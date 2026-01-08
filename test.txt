@@ -1,0 +1,13 @@
+"We have now completed a 14-day cycle at this track.
+
+Task: Review the entire conversation history, specifically comparing your predictions (based on the PDF data) vs. the actual results I provided.
+
+Output: Create a new structured text block called 'TRACK_BIAS_UPDATE_V1'. Analyze the following 3 areas and provide specific rules to add to my system:
+
+Track Bias: (e.g., 'In 80% of 6f dirt sprints, the rail horse finished ITM. Upgrade inside posts by 5 pts.')
+
+Jockey/Trainer Trends: (e.g., 'Trainer Pletcher was 0-for-15 with first-time starters. Downgrade his FTS stats by 20%.')
+
+System Failures: (e.g., 'We consistently overbet deep closers on the turf. Introduce a penalty for closure styles if the Pace Projector is Slow.')
+
+Write this as a clean, copy-pasteable block of text that I can save as 'Saratoga_Learnings.txt'."
