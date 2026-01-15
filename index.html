@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Handicapper Dashboard</title>
+    <style>
+        :root {
+            --primary: #1a237e; /* Deep Navy */
+            --secondary: #d32f2f; /* Racing Red */
+            --accent: #ffb300; /* Gold */
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --text-light: #666;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* --- Navigation --- */
+        nav {
+            background: linear-gradient(90deg, var(--primary) 0%, #283593 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo span { color: var(--accent); }
+
+        .date-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* --- View Switching Logic --- */
+        .view {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Home Dashboard --- */
+        .section-header {
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--accent);
+            padding-left: 15px;
+        }
+        
+        .section-header h2 { margin: 0; color: var(--primary); }
+        .section-header p { margin: 5px 0 0 0; color: var(--text-light); }
+
+        .track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .track-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .track-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .track-card::after {
+            content: "→";
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .track-header {
+            background: #e8eaf6;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .track-title { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
+        .track-icon { font-size: 1.5rem; }
+
+        .track-body { padding: 20px; padding-bottom: 60px; }
+        .track-meta { font-size: 0.9rem; color: var(--text-light); margin-bottom: 5px; }
+        .track-status { 
+            display: inline-block; 
+            background: #e8f5e9; 
+            color: #2e7d32; 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 0.8rem; 
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        /* --- Race Detail Page --- */
+        .back-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 30px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: var(--bg); border-color: #bbb; }
+
+        .race-banner {
+            background: linear-gradient(135deg, var(--primary), #455a64);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(26, 35, 126, 0.2);
+        }
+
+        .race-banner h1 { margin: 0; font-size: 2.5rem; line-height: 1; }
+        .race-conditions { margin-top: 10px; opacity: 0.9; font-size: 1.1rem; }
+        .race-number { 
+            font-size: 4rem; 
+            font-weight: 900; 
+            opacity: 0.2; 
+            line-height: 0;
+        }
+
+        .analysis-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .analysis-layout { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        .card h3 { 
+            margin-top: 0; 
+            color: var(--primary);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pace-insight {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #2196f3;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; padding-bottom: 10px; }
+        td { padding: 15px 5px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        
+        .horse-badge {
+            background: #333;
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .odds-pill {
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        /* Betting Sidebar */
+        .bet-ticket {
+            background: #fff8e1; /* Light yellow ticket look */
+            border: 2px dashed #ffb300;
+        }
+        
+        .bet-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 12px;
+        }
+        .bet-line:last-child { border: none; margin: 0; padding: 0; }
+        
+        .bet-type { font-weight: 900; color: var(--secondary); font-size: 0.9rem; }
+        .bet-selection { font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.1rem; }
+
+        /* Alerts */
+        .alert { padding: 15px; border-radius: 8px; font-size: 0.95rem; }
+        .alert strong { display: block; margin-bottom: 5px; font-size: 1rem; }
+        
+        .alert-danger { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">🐎 AI <span>Handicapper</span></div>
+        <div class="date-badge" id="dateDisplay">Loading Date...</div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- ==================== HOME VIEW ==================== -->
+        <div id="homeView" class="view active">
+            <div class="section-header">
+                <h2>Today's Race Cards</h2>
+                <p>Select a track to view AI analysis & pace projections.</p>
+            </div>
+
+            <div class="track-grid">
+                
+                <!-- Gulfstream Card -->
+                <div class="track-card" onclick="goTo('gulfstream')">
+                    <div class="track-header">
+                        <span class="track-title">Gulfstream Park</span>
+                        <span class="track-icon">🌴</span>
+                    </div>
+                    <div class="track-body">
+                        <div class="track-meta">Races 1 - 9</div>
+                        <div class="track-meta">First Post: 12:10 PM ET</div>
+                        <div class="track-status">Analysis Ready</div>
+                    </div>
+                </div>
+
+                <!-- Santa Anita Card -->
+                <div class="track-card" onclick="goTo('santaanita')">
+                    <div class="track-header">
+                        <span class="track-title">Santa Anita</span>
+                        <span class="track-icon">🏔️</span>
+                    </div>
+                    <div class="track-body">
+                        <div class="track-meta">Races 1 - 8</div>
+                        <div class="track-meta">First Post: 3:30 PM PT</div>
+                        <div class="track-status">Analysis Ready</div>
+                    </div>
+                </div>
+
+                <!-- Template Card (Copy this to add more) -->
+                <div class="track-card" onclick="alert('You can enable this in the HTML code!')" style="opacity: 0.5;">
+                    <div class="track-header">
+                        <span class="track-title">Aqueduct</span>
+                        <span class="track-icon">🗽</span>
+                    </div>
+                    <div class="track-body">
+                        <div class="track-meta">Races 1 - 9</div>
+                        <div class="track-meta">Pending...</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== GULFSTREAM VIEW ==================== -->
+        <div id="gulfstream" class="view">
+            <button class="back-btn" onclick="goTo('homeView')">← Back to Tracks</button>
+            
+            <div class="race-banner">
+                <div>
+                    <h1>Gulfstream Park</h1>
+                    <div class="race-conditions">Race 5 • 6 Furlongs • Dirt • Claiming $16k</div>
+                </div>
+                <div class="race-number">R5</div>
+            </div>
+
+            <div class="analysis-layout">
+                <!-- Left: Main Analysis -->
+                <div class="main-content">
+                    <div class="card">
+                        <h3>📊 Race Shape Analysis</h3>
+                        <div class="pace-insight">
+                            <strong>🔥 Pace: Hot / Contested</strong>
+                            <br>
+                            Three pure speed horses are signed on here (#2, #5, #6). Expect a duel early.
+                        </div>
+                        <p>The <strong>#4 Speed Boat</strong> sits the perfect trip here. While the 2 and 6 burn each other out on the front end, the 4 has consistently run high late-pace figures at this distance.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>🏆 Top Contenders</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Horse</th>
+                                    <th>Odds</th>
+                                    <th>The Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="horse-badge">4</span> <strong>Speed Boat</strong></td>
+                                    <td><span class="odds-pill">5-2</span></td>
+                                    <td>Perfect stalking trip; drops in class today.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="horse-badge">2</span> <strong>Lighting Fast</strong></td>
+                                    <td><span class="odds-pill">3-1</span></td>
+                                    <td>The speed of the speed. Dangerous if clears alone.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="horse-badge">8</span> <strong>Late Kicker</strong></td>
+                                    <td><span class="odds-pill">8-1</span></td>
+                                    <td>Deep closer. Will be flying late if pace melts down.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right: Sidebar -->
+                <div class="sidebar">
+                    <div class="card bet-ticket">
+                        <h3>💰 Suggested Wagers</h3>
+                        <div class="bet-line">
+                            <span class="bet-type">WIN</span>
+                            <span class="bet-selection">#4</span>
+                        </div>
+                        <div class="bet-line">
+                            <span class="bet-type">EXACTA</span>
+                            <span class="bet-selection">4 / 2,8</span>
+                        </div>
+                        <div class="bet-line">
+                            <span class="bet-type">TRIFECTA</span>
+                            <span class="bet-selection">4 / 2,8 / 2,6,8</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>⚠️ Vulnerable Favorite</h3>
+                        <div class="alert alert-danger">
+                            <strong>#6 Big Favorite (9-5)</strong>
+                            Drawing the outside post with other speed inside guarantees a wide trip.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>💣 Live Longshot</h3>
+                        <div class="alert alert-success">
+                            <strong>#8 Late Kicker (8-1)</strong>
+                            Speed figures from two back match the top contenders.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SANTA ANITA VIEW ==================== -->
+        <div id="santaanita" class="view">
+            <button class="back-btn" onclick="goTo('homeView')">← Back to Tracks</button>
+            <div class="race-banner" style="background: linear-gradient(135deg, #00695c, #004d40);">
+                <div>
+                    <h1>Santa Anita</h1>
+                    <div class="race-conditions">Race 1 • 1 Mile • Turf • Mdn Sp Wt</div>
+                </div>
+                <div class="race-number">R1</div>
+            </div>
+            <div class="card">
+                <p style="text-align: center; color: #888;">Analysis for Santa Anita goes here.<br>Copy the code from the Gulfstream section to fill this in!</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Logic to Switch Views ---
+        function goTo(viewId) {
+            // 1. Hide all views
+            document.querySelectorAll('.view').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 2. Show the specific view requested
+            const target = document.getElementById(viewId);
+            if(target) {
+                target.classList.add('active');
+                window.scrollTo(0,0); // Scroll to top
+            } else {
+                console.error("View not found:", viewId);
+            }
+        }
+
+        // --- Auto Date ---
+        const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', options);
+    </script>
+</body>
+</html>
